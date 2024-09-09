@@ -18,5 +18,6 @@ Gem::Specification.new do |spec|
   spec.files = Dir.chdir(File.expand_path(__dir__)) do
     Dir["{app,config,db,lib}/**/*", "Rakefile", "README.md"]
   end
+
   spec.add_dependency "rails", ">= 7.1.3.4"
 end
