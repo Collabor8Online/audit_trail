@@ -53,6 +53,15 @@ RSpec.describe "Recording audit trail events" do
       expect(@event.links.find_by(model: @post).partition).to eq "partition-123"
     end
 
+    it "records the parent event as the context for this event" do
+      @context = AuditTrail::Event.create! name: "parent", status: "completed"
+
+      AuditTrail.record "child", context: @context
+
+      @event = AuditTrail::Event.last
+      expect(@event.context).to eq @context
+      expect(@context.children).to include @event
+    end
 
     it "records that the event has completed" do
       AuditTrail.record "some_event"
