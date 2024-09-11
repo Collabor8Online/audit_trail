@@ -48,4 +48,16 @@ RSpec.describe AuditTrail::EventData do
     expect(@event.links.where(name: "author").count).to eq 1
     expect(@event.links.find_by(name: "author").model).to eq @another_user
   end
+
+  it "applies a load of data in one go" do
+    @user = User.create! name: "Someone"
+    @event = AuditTrail::Event.create! name: "whatever"
+
+    @event_data = described_class.new @event
+    @event_data.apply author: @user, text: "Hello"
+
+    expect(@event_data[:text]).to eq "Hello"
+    expect(@event_data[:author]).to eq @user
+
+  end
 end

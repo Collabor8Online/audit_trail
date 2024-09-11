@@ -12,6 +12,12 @@ module AuditTrail
       value.is_a?(ActiveRecord::Base) ? set_model(key, value) : set_value(key, value)
     end
 
+    def apply data
+      data.each do |key, value|
+        self[key] = value
+      end
+    end
+
     private
 
     def value_for key
@@ -27,7 +33,7 @@ module AuditTrail
     end
 
     def set_model key, model
-      @event.links.where(name: key).first_or_initialize.update! model: model
+      @event.links.where(name: key).first_or_initialize.update! model: model, partition: @event.partition
     end
   end
 end

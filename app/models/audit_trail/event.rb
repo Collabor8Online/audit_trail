@@ -31,7 +31,7 @@ module AuditTrail
     def data = @data ||= EventData.new(self)
 
     def data=(value)
-
+      data.apply value
     end
 
     private
