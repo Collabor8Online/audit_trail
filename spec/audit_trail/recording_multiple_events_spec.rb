@@ -45,12 +45,12 @@ RSpec.describe "Recording audit trail events within the context of other events"
           raise "FAILURE"
         end
 
-        expect(AuditTrail.current_context).to eq @event
+        expect(AuditTrail.context_stack.current).to eq @event
 
         raise "ANOTHER FAILURE"
       end
 
-      expect(AuditTrail.current_context).to be_nil
+      expect(AuditTrail.context_stack.current).to be_nil
     end
 
     it "removes the current context when an event fails" do
@@ -58,11 +58,11 @@ RSpec.describe "Recording audit trail events within the context of other events"
         @event = AuditTrail::Event.find_by! name: "some_event"
         AuditTrail.record "another_event" do
           @another_event = AuditTrail::Event.find_by! name: "another_event"
-          expect(AuditTrail.current_context).to eq @another_event
+          expect(AuditTrail.context_stack.current).to eq @another_event
         end
-        expect(AuditTrail.current_context).to eq @event
+        expect(AuditTrail.context_stack.current).to eq @event
       end
-      expect(AuditTrail.current_context).to be_nil
+      expect(AuditTrail.context_stack.current).to be_nil
     end
 
   end
