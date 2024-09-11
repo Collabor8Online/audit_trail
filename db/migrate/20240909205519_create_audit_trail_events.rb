@@ -6,7 +6,7 @@ class CreateAuditTrailEvents < ActiveRecord::Migration[7.2]
       t.string :partition, default: "event", null: false
       t.string :name, default: "event", null: false, index: true
       t.integer :status, default: 0, null: false
-      t.text :data
+      t.text :internal_data
       t.timestamps
     end
 

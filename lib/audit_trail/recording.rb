@@ -9,7 +9,7 @@ module AuditTrail
     models = params.select { |key, value| value.is_a? ActiveRecord::Base }
     data = params.select { |key, value| !value.is_a? ActiveRecord::Base }
 
-    Event.create!(name: event_name, context: context, partition: partition, user: user, data: data, status: "in_progress").tap do |event|
+    Event.create!(name: event_name, context: context, partition: partition, user: user, internal_data: data, status: "in_progress").tap do |event|
       begin
         context_stack.push event
 
