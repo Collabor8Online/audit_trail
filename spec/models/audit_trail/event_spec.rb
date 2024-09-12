@@ -43,5 +43,17 @@ RSpec.describe AuditTrail::Event do
       expect(@events.size).to eq 1
       expect(@events).to include @second_event
     end
+
+    it "finds events by a given user" do
+      @user = User.create name: "Someone"
+      @first_event = AuditTrail.record "post_created", user: @user
+      @second_event = AuditTrail.record "post_created", user: @user
+
+      @events = AuditTrail::Event.performed_by(@user)
+
+      expect(@events.size).to eq 2
+      expect(@events).to include @first_event
+      expect(@events).to include @second_event
+    end
   end
 end
