@@ -22,6 +22,7 @@ ActiveRecord::Schema[7.2].define(version: 2024_09_09_212715) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["context_id"], name: "index_audit_trail_events_on_context_id"
+    t.index ["created_at"], name: "index_audit_trail_events_on_created_at"
     t.index ["id", "partition"], name: "index_audit_trail_events_on_id_and_partition", unique: true
     t.index ["name"], name: "index_audit_trail_events_on_name"
     t.index ["user_type", "user_id"], name: "index_audit_trail_events_on_user"

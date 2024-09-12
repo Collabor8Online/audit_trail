@@ -2,6 +2,10 @@
 
 module AuditTrail
   class Event < ApplicationRecord
+    scope :between, ->(starts_at, ends_at) { where(created_at: starts_at..ends_at) }
+    scope :involving, ->(model) { includes(:links).where(links: { model: model }) }
+    scope :named, ->(name) { where(name: name) }
+
     belongs_to :context, class_name: "AuditTrail::Event", optional: true
     has_many :children, class_name: "AuditTrail::Event", foreign_key: "context_id", dependent: :nullify
     belongs_to :user, polymorphic: true, optional: true
