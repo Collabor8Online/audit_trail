@@ -1,9 +1,9 @@
 require_relative "lib/audit_trail/version"
 
 Gem::Specification.new do |spec|
-  spec.name        = "audit_trail"
-  spec.version     = AuditTrail::VERSION
-  spec.authors     = ["Rahoul Baruah"]
+  spec.name = "c8o_audit_trail"
+  spec.version = AuditTrail::VERSION
+  spec.authors = ["Rahoul Baruah"]
   spec.email = ["baz@collabor8online.co.uk"]
   spec.homepage = "https://www.collabor8online.co.uk"
   spec.summary = "Audit Trail"
