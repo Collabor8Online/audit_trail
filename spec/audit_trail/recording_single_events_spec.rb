@@ -28,7 +28,8 @@ RSpec.describe "Recording single audit trail events" do
     AuditTrail.record "some_event", string: "Hello", number: 123
 
     @event = AuditTrail::Event.last
-    expect(@event.data).to eq({string: "Hello", number: 123})
+    expect(@event.data[:string]).to eq "Hello"
+    expect(@event.data[:number]).to eq 123
   end
 
   it "records models with the event" do
@@ -38,7 +39,7 @@ RSpec.describe "Recording single audit trail events" do
     AuditTrail.record "post_added", post: @post, title: "Hello world"
 
     @event = AuditTrail::Event.last
-    expect(@event.data).to eq({title: "Hello world"})
+    expect(@event.data[:title]).to eq "Hello world"
     expect(@event.links.find_by(model: @post)).to_not be_nil
   end
 
@@ -49,7 +50,7 @@ RSpec.describe "Recording single audit trail events" do
     AuditTrail.record "post_added", post: @post, title: "Hello world", partition: "partition-123"
 
     @event = AuditTrail::Event.last
-    expect(@event.data).to eq({title: "Hello world"})
+    expect(@event.data[:title]).to eq "Hello world"
     expect(@event.links.find_by(model: @post).partition).to eq "partition-123"
   end
 

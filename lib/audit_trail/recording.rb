@@ -6,25 +6,13 @@ module AuditTrail
     partition ||= context&.partition || "event"
     user ||= context&.user
 
-    models = params.select { |key, value| value.is_a? ActiveRecord::Base }
-    data = params.select { |key, value| !value.is_a? ActiveRecord::Base }
-
-    Event.create!(name: event_name, context: context, partition: partition, user: user, data: data, status: "in_progress").tap do |event|
-      begin
-        context_stack.push event
-
-        models.each { |key, model| event.links.create! name: key, model: model, partition: partition }
-
-        event.update result: block&.call, status: "completed"
-      rescue => ex
-        event.update status: "failed", exception: ex
-      ensure
-        context_stack.pop
-      end
+    Event.create!(name: event_name, context: context, partition: partition, data: params, user: user, status: "in_progress").tap do |event|
+      context_stack.push event
+      event.update result: block&.call, status: "completed"
+    rescue => ex
+      event.update status: "failed", exception: ex
+    ensure
+      context_stack.pop
     end
-  end
-
-  def self.context_stack
-    Thread.current[:audit_trail_context] ||= ContextStack.new
   end
 end
