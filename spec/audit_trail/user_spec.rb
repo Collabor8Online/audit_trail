@@ -5,7 +5,6 @@ RSpec.describe AuditTrail::User do
     it "lists events that this user has performed" do
       User.class_eval do
         include AuditTrail::User
-
       end
 
       @user = User.create! name: "Someone"
