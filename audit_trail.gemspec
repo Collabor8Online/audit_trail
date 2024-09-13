@@ -20,4 +20,5 @@ Gem::Specification.new do |spec|
   end
 
   spec.add_dependency "rails", ">= 7.1.3.4"
+  spec.add_dependency "standard-procedure-plumbing"
 end

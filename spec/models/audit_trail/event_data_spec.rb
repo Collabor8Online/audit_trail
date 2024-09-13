@@ -58,6 +58,5 @@ RSpec.describe AuditTrail::EventData do
 
     expect(@event_data[:text]).to eq "Hello"
     expect(@event_data[:author]).to eq @user
-
   end
 end

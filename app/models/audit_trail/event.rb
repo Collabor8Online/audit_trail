@@ -1,9 +1,11 @@
+require "plumbing"
+
 # frozen_string_literal: true
 
 module AuditTrail
   class Event < ApplicationRecord
     scope :between, ->(starts_at, ends_at) { where(created_at: starts_at..ends_at) }
-    scope :involving, ->(model) { includes(:links).where(links: { model: model }) }
+    scope :involving, ->(model) { includes(:links).where(links: {model: model}) }
     scope :named, ->(name) { where(name: name) }
     scope :performed_by, ->(user) { where(user: user) }
 
@@ -15,6 +17,10 @@ module AuditTrail
     validates :partition, presence: true
     serialize :internal_data, type: Hash, coder: YAML, default: {}
     enum :status, ready: 0, in_progress: 10, completed: 100, failed: -1
+
+    after_save do
+      # AuditTrail.events.notify "#{name}.#{status}", self
+    end
 
     def result
       result_as_value || result_as_model

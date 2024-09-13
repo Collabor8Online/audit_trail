@@ -64,7 +64,6 @@ RSpec.describe "Recording audit trail events within the context of other events"
       end
       expect(AuditTrail.context_stack.current).to be_nil
     end
-
   end
 
   context "#status" do

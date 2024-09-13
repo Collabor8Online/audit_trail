@@ -169,6 +169,22 @@ class SendNewPostNotificationToSubscribersJob < ApplicationJob
 end
 ```
 
+### Subscribing to events
+
+If you want to know when events happen, you can subscribe to the audit trail.  It uses [plumbing](https://github.com/standard-procedure/plumbing) to publish a [pipe](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/pipe.rb) that you can observe.  You can then use a [filter](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/filter.rb) so you are only notified about the events that you are interested in.
+
+```ruby
+# Filter out all events except "document" events that have completed successfully
+@document_filter = Plumbing::Filter.new source: AuditTrail.events do |notification|
+  notification.type.start_with? "document" && notification.type.end_with? ".completed"
+end
+@document_filter.add_observer do |notification|
+  do_something_with notification.data
+end
+```
+
+The notifications that you observe will have a `type` property that is the event's name, with ".started", ".completed" or ".failed".  The `data` property will be the `AuditTrail::Event`.
+
 ## Installation
 Add this line to your application's Gemfile:
 
