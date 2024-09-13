@@ -13,6 +13,7 @@ gem "guard"
 gem "guard-rspec"
 gem "guard-bundler"
 gem "solargraph"
-gem 'solargraph-standardrb'
+gem "solargraph-standardrb"
+gem "guard-standardrb"
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"

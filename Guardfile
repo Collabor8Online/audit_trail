@@ -19,3 +19,7 @@ group :development do
     files.each { |file| watch(helper.real_path(file)) }
   end
 end
+
+guard :standardrb, fix: true, all_on_start: true, progress: true do
+  watch(/.+\.rb$/)
+end
