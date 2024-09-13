@@ -19,7 +19,7 @@ module AuditTrail
     enum :status, ready: 0, in_progress: 10, completed: 100, failed: -1
 
     after_save do
-      # AuditTrail.events.notify "#{name}.#{status}", self
+      AuditTrail.events.notify "#{name}:#{status}", self
     end
 
     def result

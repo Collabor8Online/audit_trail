@@ -171,7 +171,11 @@ end
 
 ### Subscribing to events
 
-If you want to know when events happen, you can subscribe to the audit trail.  It uses [plumbing](https://github.com/standard-procedure/plumbing) to publish a [pipe](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/pipe.rb) that you can observe.  You can then use a [filter](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/filter.rb) so you are only notified about the events that you are interested in.
+If you want to know when events happen, you can observe to the audit trail.
+
+Observation uses [plumbing](https://github.com/standard-procedure/plumbing) to publish a [pipe](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/pipe.rb) that can have observers attached.
+
+The notifications that you observe will have a `type` property that is the event's name, ending with ":started", ":completed" or ":failed".  The `data` property will be the `AuditTrail::Event`. itself.  This means you can use a [filter](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/filter.rb) to observe only the events you are interested in, then use the event object itself to decide how you are going to react.
 
 ```ruby
 # Filter out all events except "document" events that have completed successfully
@@ -183,12 +187,11 @@ end
 end
 ```
 
-The notifications that you observe will have a `type` property that is the event's name, with ".started", ".completed" or ".failed".  The `data` property will be the `AuditTrail::Event`.
-
 ## Installation
 Add this line to your application's Gemfile:
 
 ```ruby
-gem "audit_trail"
+gem "c8o_audit_trail"
 ```
-Then `include AuditTrail::User` and `include AuditTrail::Model` into the relevant ActiveRecord models.
+
+Then `AuditTrail.record` the events as needed (in your controllers, models and other functionality) and use `include AuditTrail::User` and `include AuditTrail::Model` to see which events are related to which models.
