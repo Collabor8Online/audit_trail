@@ -2,6 +2,8 @@
 
 At [Collabor8Online](https://www.collabor8online.co.uk) a vital part of the functionality is keeping an audit trail.
 
+(Also note that this gem was developed for use by us.  We're sharing it in case others find it useful, but depending upon demand, it will probably never be a true "community" project.  Finally note that currently it's licensed under the [LGPL](/LICENSE) which may make it unsuitable for some - contact us if you'd like to know about options).
+
 This gem allows you to add a record of events that have happened within your application in an unobtrusive manner.  Events inherit their context from earlier events so you can prepare things in your controller and it carries through your models as you record subsequent events.
 
 ## Usage
@@ -183,7 +185,9 @@ The notifications that you observe will have a `type` property that is the event
   notification.type.start_with? "document" && notification.type.end_with? ".completed"
 end
 @document_filter.add_observer do |notification|
-  do_something_with notification.data
+  @document_filter.safely do
+    do_something_with notification.data
+  end
 end
 ```
 
