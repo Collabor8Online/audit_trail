@@ -18,7 +18,7 @@ module AuditTrail
     serialize :internal_data, type: Hash, coder: YAML, default: {}
     enum :status, ready: 0, in_progress: 10, completed: 100, failed: -1
 
-    after_save do
+    after_commit do
       AuditTrail.events.notify "#{name}:#{status}", self
     end
 

@@ -19,7 +19,9 @@ module AuditTrail
   end
 
   def self.reset
+    @service&.stop
     @service = nil
+    @pipe&.stop
     @pipe = nil
     Thread.current[:audit_trail_context] = nil
   end

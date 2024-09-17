@@ -78,17 +78,21 @@ RSpec.describe "Recording audit trail events within the context of other events"
     end
 
     it "marks the event as completed" do
-      AuditTrail.service.record "some_event" do
-        # whatever
+      await do
+        AuditTrail.service.record "some_event"
       end
+
       @event = AuditTrail::Event.last
       expect(@event).to be_completed
     end
 
     it "marks the event as failed" do
-      AuditTrail.service.record "some_event" do
-        raise "BOOM"
+      await do
+        AuditTrail.service.record "some_event" do
+          raise "BOOM"
+        end
       end
+
       @event = AuditTrail::Event.last
       expect(@event).to be_failed
     end
@@ -96,8 +100,10 @@ RSpec.describe "Recording audit trail events within the context of other events"
 
   context "#result" do
     it "records the result of the event as a simple type" do
-      AuditTrail.service.record "some_event" do
-        :the_result
+      await do
+        AuditTrail.service.record "some_event" do
+          :the_result
+        end
       end
 
       @event = AuditTrail::Event.last
@@ -107,8 +113,10 @@ RSpec.describe "Recording audit trail events within the context of other events"
     it "records the result of the event as a linked model" do
       @some_user = User.create! name: "Some person"
 
-      AuditTrail.service.record "some_event" do
-        @some_user
+      await do
+        AuditTrail.service.record "some_event" do
+          @some_user
+        end
       end
 
       @event = AuditTrail::Event.last
@@ -123,6 +131,7 @@ RSpec.describe "Recording audit trail events within the context of other events"
           raise "BOOM"
         end
       end
+
       @event = AuditTrail::Event.last
       expect(@event.exception_class).to eq "RuntimeError"
       expect(@event.exception_message).to eq "BOOM"
@@ -131,12 +140,12 @@ RSpec.describe "Recording audit trail events within the context of other events"
 
   context "inheritance" do
     it "inherits the partition key from the current context" do
-      AuditTrail.service.record "some_event", partition: "ABC" do
-        puts "PARTITION SHOULD BE ABC"
-        puts "CONTEXT #{AuditTrail.context_stack.inspect}"
-        AuditTrail.service.record "another_event"
+      await do
+        AuditTrail.service.record "some_event", partition: "ABC" do
+          AuditTrail.service.record "another_event"
+        end
       end
-      puts "DONE"
+
       @event = AuditTrail::Event.last
       expect(@event.name).to eq "another_event"
       expect(@event.partition).to eq "ABC"
@@ -163,6 +172,7 @@ RSpec.describe "Recording audit trail events within the context of other events"
           AuditTrail.service.record "another_event", user: @other_user
         end
       end
+
       @event = AuditTrail::Event.last
       expect(@event.name).to eq "another_event"
       expect(@event.user).to eq @other_user
