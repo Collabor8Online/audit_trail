@@ -5,6 +5,7 @@ module AuditTrail
     end
 
     def push event
+      puts "PUSH #{event.inspect}"
       @stack << event
     end
 

@@ -8,9 +8,11 @@ RSpec.describe AuditTrail::User do
       end
 
       @user = User.create! name: "Someone"
-      AuditTrail.record "first_event", user: @user do
-        AuditTrail.record "second_event"
-      end
+
+      AuditTrail.service.record "first_event", user: @user do
+        AuditTrail.service.record "second_event"
+      end.value
+
       @first_event = AuditTrail::Event.find_by name: "first_event"
       @second_event = AuditTrail::Event.find_by name: "second_event"
 

@@ -7,7 +7,7 @@ RSpec.describe "AuditTrail.events" do
       @result = notification.type
     end
 
-    AuditTrail.record "some_event" do
+    AuditTrail.service.record "some_event" do
       expect(@result).to eq "some_event:in_progress"
     end
   end
@@ -18,7 +18,7 @@ RSpec.describe "AuditTrail.events" do
       @result = notification.type
     end
 
-    AuditTrail.record "some_event" do
+    AuditTrail.service.record "some_event" do
       # ignore the stuff in here
     end
     # and check the result of the final event notification
@@ -31,7 +31,7 @@ RSpec.describe "AuditTrail.events" do
       @result = notification.type
     end
 
-    AuditTrail.record "some_event" do
+    AuditTrail.service.record "some_event" do
       raise "BOOM"
     end
     # and check the result of the final event notification

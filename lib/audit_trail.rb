@@ -6,13 +6,27 @@ module AuditTrail
     Thread.current[:audit_trail_context] ||= ContextStack.new
   end
 
+  def self.current_context
+    context_stack.current
+  end
+
+  def self.service
+    @service ||= AuditTrail::Service.start
+  end
+
   def self.events
     @pipe ||= Plumbing::Pipe.start
+  end
+
+  def self.reset
+    @service = nil
+    @pipe = nil
+    Thread.current[:audit_trail_context] = nil
   end
 end
 
 require "audit_trail/version"
 require "audit_trail/engine"
-require "audit_trail/recording"
+require "audit_trail/service"
 require "audit_trail/user"
 require "audit_trail/model"

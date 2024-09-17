@@ -35,8 +35,9 @@ RSpec.describe AuditTrail::Event do
       @user = User.create name: "Someone"
       @first_post = Post.create user: @user, title: "Hello"
       @second_post = Post.create user: @user, title: "Goodbye"
-      @first_event = AuditTrail.record "post_created", post: @first_post
-      @second_event = AuditTrail.record "post_created", post: @second_post
+
+      @first_event = await { AuditTrail.service.record "post_created", post: @first_post }
+      @second_event = await { AuditTrail.service.record "post_created", post: @second_post }
 
       @events = AuditTrail::Event.involving(@second_post)
 
@@ -46,8 +47,9 @@ RSpec.describe AuditTrail::Event do
 
     it "finds events by a given user" do
       @user = User.create name: "Someone"
-      @first_event = AuditTrail.record "post_created", user: @user
-      @second_event = AuditTrail.record "post_created", user: @user
+
+      @first_event = await { AuditTrail.service.record("post_created", user: @user) }
+      @second_event = await { AuditTrail.service.record("post_created", user: @user) }
 
       @events = AuditTrail::Event.performed_by(@user)
 
