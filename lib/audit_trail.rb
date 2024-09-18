@@ -1,15 +1,6 @@
 require "plumbing"
-require "audit_trail/context_stack"
 
 module AuditTrail
-  def self.context_stack
-    Thread.current[:audit_trail_context] ||= ContextStack.new
-  end
-
-  def self.current_context
-    context_stack.current
-  end
-
   def self.service
     @service ||= AuditTrail::Service.start
   end
@@ -23,7 +14,6 @@ module AuditTrail
     @service = nil
     @pipe&.stop
     @pipe = nil
-    Thread.current[:audit_trail_context] = nil
   end
 end
 

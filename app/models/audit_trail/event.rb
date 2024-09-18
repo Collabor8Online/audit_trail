@@ -17,8 +17,12 @@ module AuditTrail
     serialize :internal_data, type: Hash, coder: YAML, default: {}
     enum :status, ready: 0, in_progress: 10, completed: 100, failed: -1
 
-    after_commit do
-      AuditTrail.events.notify "#{name}:#{status}", self
+    def complete! result: nil
+      update! result: result, status: "completed"
+    end
+
+    def fail! exception
+      update! exception: exception, status: "failed"
     end
 
     def result
@@ -38,9 +42,11 @@ module AuditTrail
 
     def exception_message = internal_data[EXCEPTION_MESSAGE]
 
-    def data = @data ||= EventData.new(self)
+    def data
+      @data ||= EventData.new(self)
+    end
 
-    def data=(value)
+    def data= value
       data.apply value
     end
 
@@ -48,16 +54,22 @@ module AuditTrail
 
     def result_as_value = internal_data[RESULT]
 
-    def result_as_model
-      links.find_by(name: RESULT)&.model
-    end
+    def result_as_model = links.find_by(name: RESULT)&.model
 
-    def record_result_as_value(value)
+    def record_result_as_value value
       value.nil? ? internal_data.delete(RESULT) : internal_data[RESULT] = value
     end
 
-    def record_result_as_model(model)
+    def record_result_as_model model
       links.create! name: RESULT, model: model
+    end
+
+    before_save do
+      self.user ||= context&.user
+    end
+
+    after_commit do
+      AuditTrail.events.notify "#{name}:#{status}", self
     end
 
     RESULT = "audit_trail/event/result"
