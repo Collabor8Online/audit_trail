@@ -12,6 +12,7 @@ require "rspec/rails"
 require "plumbing/actor/async"
 require "plumbing/actor/rails"
 require "plumbing/spec/become_matchers"
+require "plumbing/spec/modes"
 # Add additional requires below this line. Rails is not loaded until this point!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
@@ -70,7 +71,4 @@ RSpec.configure do |config|
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 
-  config.before do
-    AuditTrail.reset
-  end
 end

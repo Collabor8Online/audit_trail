@@ -1,19 +1,17 @@
 require "rails_helper"
 
 RSpec.describe "Recording audit trail events within the context of other events" do
-  [:inline, :threaded_rails].each do |mode|
-    context "In #{mode} mode" do
-      around :each do |example|
-        Plumbing.configure mode: mode, timeout: 3, debug: false, &example
-      end
-
+  Plumbing::Spec.modes do
+    context "In #{Plumbing.config.mode} mode" do
       context "#context" do
         it "records an event within the context of another event" do
           AuditTrail.service.record "some_event" do |context|
             AuditTrail.service.record "another_event", context: context
           end
 
-          wait_for { @event = AuditTrail::Event.find_by name: "another_event" }
+          wait_for do
+            @event = AuditTrail::Event.find_by name: "another_event"
+          end
           expect(@event.context.name).to eq "some_event"
         end
 

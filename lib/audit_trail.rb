@@ -8,13 +8,6 @@ module AuditTrail
   def self.events
     @pipe ||= Plumbing::Pipe.start
   end
-
-  def self.reset
-    @service&.stop
-    @service = nil
-    @pipe&.stop
-    @pipe = nil
-  end
 end
 
 require "audit_trail/version"
