@@ -9,17 +9,15 @@ RSpec.describe AuditTrail::Model do
       @user = User.create! name: "Someone"
       @post = Post.create user: @user, title: "Something"
 
-      await do
-        AuditTrail.service.record "first_event", user: @user, post: @post do
-          AuditTrail.service.record "second_event", post: @post
-        end
+      AuditTrail.service.record "first_event", user: @user, post: @post do
+        AuditTrail.service.record "second_event", post: @post
       end
 
-      @first_event = AuditTrail::Event.find_by name: "first_event"
-      @second_event = AuditTrail::Event.find_by name: "second_event"
+      wait_for { @first_event = AuditTrail::Event.find_by name: "first_event" }
+      wait_for { @second_event = AuditTrail::Event.find_by name: "second_event" }
 
-      expect(@post.linked_events).to include @first_event
-      expect(@post.linked_events).to include @second_event
+      expect(true).to become_equal_to { @post.reload.linked_events.include? @first_event }
+      expect(true).to become_equal_to { @post.reload.linked_events.include? @second_event }
     end
   end
 end

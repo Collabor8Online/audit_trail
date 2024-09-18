@@ -7,10 +7,9 @@ RSpec.describe "AuditTrail.events" do
       @result << notification.type
     end
 
-    await do
-      AuditTrail.service.record "some_event"
-    end
-    expect(@result).to include "some_event:in_progress"
+    AuditTrail.service.record "some_event"
+
+    expect(true).to become_equal_to { @result.include? "some_event:in_progress" }
   end
 
   it "publishes events when they are completed" do
@@ -19,11 +18,9 @@ RSpec.describe "AuditTrail.events" do
       @result << notification.type
     end
 
-    await do
-      AuditTrail.service.record "some_event"
-    end
-    # and check the result of the final event notification
-    expect(@result).to include "some_event:completed"
+    AuditTrail.service.record "some_event"
+
+    expect(true).to become_equal_to { @result.include? "some_event:completed" }
   end
 
   it "publishes events when they fail" do
@@ -32,12 +29,9 @@ RSpec.describe "AuditTrail.events" do
       @result << notification.type
     end
 
-    await do
-      AuditTrail.service.record "some_event" do
-        raise "BOOM"
-      end
+    AuditTrail.service.record "some_event" do
+      raise "BOOM"
     end
-    # and check the result of the final event notification
-    expect(@result).to include "some_event:failed"
+    expect(true).to become_equal_to { @result.include? "some_event:failed" }
   end
 end

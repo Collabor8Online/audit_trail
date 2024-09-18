@@ -19,6 +19,7 @@ module AuditTrail
     enum :status, ready: 0, in_progress: 10, completed: 100, failed: -1
 
     after_commit do
+      puts "after commit #{name}:#{status}"
       AuditTrail.events.notify "#{name}:#{status}", self
     end
 

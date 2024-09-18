@@ -16,5 +16,7 @@ gem "solargraph"
 gem "solargraph-standardrb"
 gem "guard-standardrb"
 gem "async"
+gem "standard-procedure-plumbing", path: "/Users/rahoulb/Developer/standardprocedure/plumbing"
+
 # Start debugger with binding.b [https://github.com/ruby/debug]
 # gem "debug", ">= 1.0.0"

@@ -11,6 +11,7 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 require "rspec/rails"
 require "plumbing/actor/async"
 require "plumbing/actor/threaded"
+require "plumbing/spec/become_equal_to_matcher"
 # Add additional requires below this line. Rails is not loaded until this point!
 
 # Requires supporting ruby files with custom matchers and macros, etc, in
@@ -70,7 +71,7 @@ RSpec.configure do |config|
   # config.filter_gems_from_backtrace("gem name")
 
   config.around :each do |example|
-    Plumbing.configure mode: :inline, timeout: 3, &example
+    Plumbing.configure mode: :threaded, timeout: 3, debug: true, &example
     AuditTrail.reset
   end
 end

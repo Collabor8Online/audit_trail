@@ -5,9 +5,9 @@ module AuditTrail
 
     private
 
-    def record event_name, partition: nil, user: nil, context: nil, **params, &block
+    def record event_name, partition: nil, user: nil, context: nil, result: nil, **params, &block
       start event_name, partition: partition, user: user, context: context, **params
-      result = await { block&.call }
+      block&.call
       complete result: result
     rescue => exception
       fail exception
