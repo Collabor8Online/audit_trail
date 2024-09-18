@@ -8,13 +8,6 @@ RSpec.describe "Recording single audit trail events" do
     expect(@event.name).to eq "some_event"
   end
 
-  it "records a partition key" do
-    await { AuditTrail.service.record "some_event", partition: "partition-123" }
-
-    @event = AuditTrail::Event.last
-    expect(@event.partition).to eq "partition-123"
-  end
-
   it "records the user" do
     @user = User.create! name: "Some person"
 
@@ -41,17 +34,6 @@ RSpec.describe "Recording single audit trail events" do
     @event = AuditTrail::Event.last
     expect(@event.data[:title]).to eq "Hello world"
     expect(@event.links.find_by(model: @post)).to_not be_nil
-  end
-
-  it "records the partition key along with models and the event" do
-    @user = User.create! name: "Some person"
-    @post = Post.create! user: @user, title: "Hello world", contents: "Welcome to my blog!"
-
-    await { AuditTrail.service.record "post_added", post: @post, title: "Hello world", partition: "partition-123" }
-
-    @event = AuditTrail::Event.last
-    expect(@event.data[:title]).to eq "Hello world"
-    expect(@event.links.find_by(model: @post).partition).to eq "partition-123"
   end
 
   it "records the parent event as the context for this event" do

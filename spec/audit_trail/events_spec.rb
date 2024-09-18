@@ -9,7 +9,7 @@ RSpec.describe "AuditTrail.events" do
 
     AuditTrail.service.record "some_event"
 
-    expect(true).to become_equal_to { @result.include? "some_event:in_progress" }
+    expect { @result.include? "some_event:in_progress" }.to become_true
   end
 
   it "publishes events when they are completed" do
@@ -20,7 +20,7 @@ RSpec.describe "AuditTrail.events" do
 
     AuditTrail.service.record "some_event"
 
-    expect(true).to become_equal_to { @result.include? "some_event:completed" }
+    expect { @result.include? "some_event:completed" }.to become_true
   end
 
   it "publishes events when they fail" do
@@ -32,6 +32,6 @@ RSpec.describe "AuditTrail.events" do
     AuditTrail.service.record "some_event" do
       raise "BOOM"
     end
-    expect(true).to become_equal_to { @result.include? "some_event:failed" }
+    expect { @result.include? "some_event:failed" }.to become_true
   end
 end

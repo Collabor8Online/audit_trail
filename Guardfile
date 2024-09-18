@@ -2,7 +2,7 @@ ignore(/bin/, /spec\/test_app\/storage/, /spec\/test_app\/tmp/, /spec\/test_app\
 
 group :development do
   guard :rspec, cmd: "bundle exec rspec" do
-    watch(%r{^spec/.+_spec\.rb$}) { "spec" }
+    watch(%r{^spec/.+_spec\.rb$})
     watch(%r{^lib/(.+)\.rb$}) { "spec" }
     watch(%r{^app/(.+)\.rb$}) { "spec" }
   end

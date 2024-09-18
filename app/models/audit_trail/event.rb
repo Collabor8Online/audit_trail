@@ -14,12 +14,10 @@ module AuditTrail
     belongs_to :user, polymorphic: true, optional: true
     has_many :links, class_name: "AuditTrail::LinkedModel", dependent: :destroy
     validates :name, presence: true
-    validates :partition, presence: true
     serialize :internal_data, type: Hash, coder: YAML, default: {}
     enum :status, ready: 0, in_progress: 10, completed: 100, failed: -1
 
     after_commit do
-      puts "after commit #{name}:#{status}"
       AuditTrail.events.notify "#{name}:#{status}", self
     end
 
@@ -59,7 +57,7 @@ module AuditTrail
     end
 
     def record_result_as_model(model)
-      links.create! name: RESULT, partition: partition, model: model
+      links.create! name: RESULT, model: model
     end
 
     RESULT = "audit_trail/event/result"

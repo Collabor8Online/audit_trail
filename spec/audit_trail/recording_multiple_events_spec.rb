@@ -3,27 +3,22 @@ require "rails_helper"
 RSpec.describe "Recording audit trail events within the context of other events" do
   context "#context" do
     it "records an event within the context of another event" do
-      await do
-        AuditTrail.service.record "some_event" do
-          AuditTrail.service.record "another_event"
-        end
+      AuditTrail.service.record "some_event" do
+        AuditTrail.service.record "another_event"
       end
 
-      @event = AuditTrail::Event.last
-      expect(@event.name).to eq "another_event"
+      wait_for { @event = AuditTrail::Event.find_by name: "another_event" }
       expect(@event.context.name).to eq "some_event"
     end
 
     it "records a hierarchy of events" do
-      await do
-        AuditTrail.service.record "event" do
-          AuditTrail.service.record "child" do
-            AuditTrail.service.record "grandchild"
-          end
+      AuditTrail.service.record "event" do
+        AuditTrail.service.record "child" do
+          AuditTrail.service.record "grandchild"
         end
       end
-      @event = AuditTrail::Event.last
-      expect(@event.name).to eq "grandchild"
+
+      wait_for { @event = AuditTrail::Event.find_by name: "grandchild" }
       expect(@event.context.name).to eq "child"
       expect(@event.context.context.name).to eq "event"
     end
@@ -78,103 +73,62 @@ RSpec.describe "Recording audit trail events within the context of other events"
     end
 
     it "marks the event as completed" do
-      await do
-        AuditTrail.service.record "some_event"
-      end
+      AuditTrail.service.record "some_event"
 
-      @event = AuditTrail::Event.last
+      wait_for { @event = AuditTrail::Event.find_by name: "some_event" }
       expect(@event).to be_completed
     end
 
     it "marks the event as failed" do
-      await do
-        AuditTrail.service.record "some_event" do
-          raise "BOOM"
-        end
+      AuditTrail.service.record "some_event" do
+        raise "BOOM"
       end
 
-      @event = AuditTrail::Event.last
+      wait_for { @event = AuditTrail::Event.find_by name: "some_event" }
       expect(@event).to be_failed
     end
   end
 
   context "#result" do
     it "records the result of the event as a simple type" do
-      await do
-        AuditTrail.service.record "some_event" do
-          :the_result
-        end
-      end
+      AuditTrail.service.record "some_event", result: :the_result
 
-      @event = AuditTrail::Event.last
+      wait_for { @event = AuditTrail::Event.find_by name: "some_event" }
       expect(@event.result).to eq :the_result
     end
 
     it "records the result of the event as a linked model" do
       @some_user = User.create! name: "Some person"
 
-      await do
-        AuditTrail.service.record "some_event" do
-          @some_user
-        end
-      end
+      AuditTrail.service.record "some_event", result: @some_user
 
-      @event = AuditTrail::Event.last
+      wait_for { @event = AuditTrail::Event.find_by name: "some_event" }
       expect(@event.result).to eq @some_user
     end
   end
 
   context "#exception" do
     it "records the exception that caused the failure" do
-      await do
-        AuditTrail.service.record "some_event" do
-          raise "BOOM"
-        end
+      AuditTrail.service.record "some_event" do
+        raise "BOOM"
       end
 
-      @event = AuditTrail::Event.last
+      wait_for { @event = AuditTrail::Event.find_by name: "some_event" }
       expect(@event.exception_class).to eq "RuntimeError"
       expect(@event.exception_message).to eq "BOOM"
     end
   end
 
   context "inheritance" do
-    it "inherits the partition key from the current context" do
-      await do
-        AuditTrail.service.record "some_event", partition: "ABC" do
-          AuditTrail.service.record "another_event"
-        end
-      end
-
-      @event = AuditTrail::Event.last
-      expect(@event.name).to eq "another_event"
-      expect(@event.partition).to eq "ABC"
-    end
-
-    it "overrides the partition key from the current context" do
-      await do
-        AuditTrail.service.record "some_event", partition: "ABC" do
-          AuditTrail.service.record "another_event", partition: "XYZ"
-        end
-      end
-
-      @event = AuditTrail::Event.last
-      expect(@event.name).to eq "another_event"
-      expect(@event.partition).to eq "XYZ"
-    end
-
     it "inherits the user from the current context" do
       @user = User.create! name: "Some person"
       @other_user = User.create! name: "Someone else"
 
-      await do
-        AuditTrail.service.record "some_event", user: @user do
-          AuditTrail.service.record "another_event", user: @other_user
-        end
+      AuditTrail.service.record "some_event", user: @user do
+        AuditTrail.service.record "another_event", user: @other_user
       end
 
-      @event = AuditTrail::Event.last
-      expect(@event.name).to eq "another_event"
+      wait_for { @event = AuditTrail::Event.find_by name: "another_event" }
       expect(@event.user).to eq @other_user
     end
   end

@@ -3,12 +3,7 @@ PATH
   specs:
     c8o_audit_trail (0.1.0)
       rails (>= 7.1.3.4)
-
-PATH
-  remote: /Users/rahoulb/Developer/standardprocedure/plumbing
-  specs:
-    standard-procedure-plumbing (0.4.3)
-      globalid
+      standard-procedure-plumbing
 
 GEM
   remote: https://rubygems.org/
@@ -352,6 +347,8 @@ GEM
     standard-performance (1.4.0)
       lint_roller (~> 1.1)
       rubocop-performance (~> 1.21.0)
+    standard-procedure-plumbing (0.4.5)
+      globalid
     stringio (3.1.1)
     thor (1.3.2)
     tilt (2.4.0)
@@ -397,7 +394,6 @@ DEPENDENCIES
   solargraph-standardrb
   sqlite3
   standard (>= 1.3)
-  standard-procedure-plumbing!
 
 BUNDLED WITH
    2.5.18

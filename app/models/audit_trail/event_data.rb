@@ -33,7 +33,7 @@ module AuditTrail
     end
 
     def set_model key, model
-      @event.links.where(name: key).first_or_initialize.update! model: model, partition: @event.partition
+      @event.links.where(name: key).first_or_initialize.update! model: model
     end
   end
 end

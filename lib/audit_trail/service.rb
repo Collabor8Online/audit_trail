@@ -5,20 +5,19 @@ module AuditTrail
 
     private
 
-    def record event_name, partition: nil, user: nil, context: nil, result: nil, **params, &block
-      start event_name, partition: partition, user: user, context: context, **params
+    def record event_name, user: nil, context: nil, result: nil, **params, &block
+      start event_name, user: user, context: context, **params
       block&.call
       complete result: result
     rescue => exception
       fail exception
     end
 
-    def start event_name, partition: nil, user: nil, context: nil, **params
+    def start event_name, user: nil, context: nil, **params
       context ||= context_stack.current
-      partition ||= context&.partition || "event"
       user ||= context&.user
 
-      Event.create!(name: event_name, context: context, partition: partition, data: params, user: user,
+      Event.create!(name: event_name, context: context, data: params, user: user,
         status: "in_progress").tap do |event|
         context_stack.push event
       end

@@ -16,8 +16,8 @@ RSpec.describe AuditTrail::Model do
       wait_for { @first_event = AuditTrail::Event.find_by name: "first_event" }
       wait_for { @second_event = AuditTrail::Event.find_by name: "second_event" }
 
-      expect(true).to become_equal_to { @post.reload.linked_events.include? @first_event }
-      expect(true).to become_equal_to { @post.reload.linked_events.include? @second_event }
+      expect { @post.reload.linked_events.include? @first_event }.to become_true
+      expect { @post.reload.linked_events.include? @second_event }.to become_true
     end
   end
 end
