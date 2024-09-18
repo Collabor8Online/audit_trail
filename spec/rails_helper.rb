@@ -10,7 +10,7 @@ abort("The Rails environment is running in production mode!") if Rails.env.produ
 # return unless Rails.env.test?
 require "rspec/rails"
 require "plumbing/actor/async"
-require "plumbing/actor/threaded"
+require "plumbing/actor/rails"
 require "plumbing/spec/become_matchers"
 # Add additional requires below this line. Rails is not loaded until this point!
 
@@ -70,8 +70,7 @@ RSpec.configure do |config|
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 
-  config.around :each do |example|
-    Plumbing.configure mode: :threaded, timeout: 3, debug: false, &example
+  config.before do
     AuditTrail.reset
   end
 end

@@ -7,10 +7,12 @@ module AuditTrail
 
     def record event_name, user: nil, context: nil, result: nil, **params, &block
       start(event_name, user: user, context: context, **params).tap do |event|
-        block&.call event
-        complete event, result: result
-      rescue => exception
-        fail event, exception
+        safely do
+          block&.call event
+          complete event, result: result
+        rescue => exception
+          fail event, exception
+        end
       end
     end
 
