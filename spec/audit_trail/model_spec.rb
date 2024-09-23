@@ -22,6 +22,19 @@ RSpec.describe AuditTrail::Model do
           expect { @post.reload.linked_events.include? @second_event }.to become_true
         end
       end
+
+      context ".event_names" do
+        it "lists the names of the events that this model will broadcast" do
+          Post.class_eval do
+            include AuditTrail::Model
+            broadcasts_events :published, :updated, :deleted
+          end
+
+          expect(Post.event_names).to include :published
+          expect(Post.event_names).to include :updated
+          expect(Post.event_names).to include :deleted
+        end
+      end
     end
   end
 end

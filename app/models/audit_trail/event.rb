@@ -69,7 +69,7 @@ module AuditTrail
     end
 
     after_commit do
-      AuditTrail.events.notify "#{name}:#{status}", self
+      AuditTrail.events.notify "#{name}:#{status}", event: self
     end
 
     RESULT = "audit_trail/event/result"

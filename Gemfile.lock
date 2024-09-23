@@ -212,7 +212,7 @@ GEM
       method_source (~> 1.0)
     psych (5.1.2)
       stringio
-    puma (6.4.2)
+    puma (6.4.3)
       nio4r (~> 2.0)
     racc (1.8.1)
     rack (3.1.7)
@@ -347,7 +347,7 @@ GEM
     standard-performance (1.4.0)
       lint_roller (~> 1.1)
       rubocop-performance (~> 1.21.0)
-    standard-procedure-plumbing (0.4.5)
+    standard-procedure-plumbing (0.5.0)
       globalid
     stringio (3.1.1)
     thor (1.3.2)

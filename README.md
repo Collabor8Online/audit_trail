@@ -12,15 +12,17 @@ Install the gem into your Rails application.  Then `include AuditTrail::User` in
 
 For example, in Collabor8Online, we deal with Documents in Folders.  The end-user may wish to see a report on all events that have taken place regarding a particular document, or all events that have taken place in a given folder.  Both the `Document` and `Folder` classes are `AuditTrail::Model`s, meaning we can use `@document.linked_events.between(@first_date, @last_date)` or `@folder.linked_events.named("document.uploaded")`.
 
+The `AuditTrail::Service` is an actor, so if you wish to use the return values, you must use `await`.  You can also use `wait_for` to check for results.  See the [documentation on actors](https://github.com/standard-procedure/plumbing/blob/main/docs/actors.md) for more information.
+
 ### Recording events
 
 To record a single event, it's as simple as:
 
 ```ruby
-AuditTrail.record "my_event"
+AuditTrail.service.record "my_event"
 ```
 
-Every event should have a name to describe it to the rest of your application.  I recommend namespacing these - something like "collabor8.document.uploaded" - as these will then form the basis of your audit reports.
+Every event should have a name to describe it to the rest of your application.  I recommend name-spacing these - something like "collabor8.document.uploaded" - as these will then form the basis of your audit reports.
 
 ### Users
 
@@ -33,7 +35,7 @@ class User < ApplicationRecord
 end
 
 @alice = User.create! name: "Alice"
-AuditTrail.record "my_event", user: @alice
+await { AuditTrail.service.record "my_event", user: @alice }
 
 @alice.events.first.name
 # => "my_event"
@@ -43,9 +45,9 @@ AuditTrail.record "my_event", user: @alice
 Each event can have data stored alongside it.  Any simple values (integers, strings etc) are serialised as YAML within the event and can be accessed through the `data` accessor.
 
 ```ruby
-AuditTrail.record "my_event", hello: "world", number: 123
+AuditTrail.service.record "my_event", hello: "world", number: 123
 
-@event = AuditTrail::Event.first
+wait_for { @event = AuditTrail::Event.first }
 @event.data[:hello]
 # => "world"
 @event.data[:number]
@@ -61,7 +63,7 @@ You can use the `AuditTrail::Model` module to access the events linked to your m
 @folder = ...
 @task = ...
 
-AuditTrail.record "workflows.workflow_task.created", task: @task, folder: @folder
+await { AuditTrail.service.record "workflows.workflow_task.created", task: @task, folder: @folder }
 
 @folder.linked_events.count
 # => 1
@@ -69,19 +71,36 @@ AuditTrail.record "workflows.workflow_task.created", task: @task, folder: @folde
 # => true
 ```
 
+### Results
+
+You can pass a `result` parameter through to the call to `#record`.  This is then stored as the `#result` of the event and can either be a simple type or an ActiveRecord model.
+
+```ruby
+@event = await { AuditTrail.service.record "something", result: 123 }
+
+puts @event.result
+# => 123
+
+@alice = Person.find_by! name: "Alice"
+@event = await { AuditTrail.service.record "something", result: @alice }
+
+puts @event.result
+# => @alice
+```
+
 ### Stacking events
 
 Events are hierarchical, forming a tree structure.  This is because one event in your application may result in multiple further events which may trigger even more events.
 
-This can be handled simply by nesting your calls to `AuditTrail.record`
+This can be handled simply by nesting your calls to `AuditTrail.service.record` and passing the context through to any subsequent events.
 
 ```ruby
-AuditTrail.record "trigger" do
-  AuditTrail.record "child_event_1" do
-    AuditTrail.record "grandchild_event_1"
-    AuditTrail.record "grandchild_event_2"
+AuditTrail.service.record "trigger" do |context|
+  AuditTrail.service.record "child_event_1", context: context do |context|
+    AuditTrail.service.record "grandchild_event_1", context: context
+    AuditTrail.service.record "grandchild_event_2", context: context
   end
-  AuditTrail.record "child_event_2"
+  AuditTrail.service.record "child_event_2", context: context
 end
 
 # produces a tree of events:
@@ -91,28 +110,35 @@ end
 # |   |-- grand_child_event_1
 # |   |-- grand_child_event_2
 # |-- child_event_2
-#
+
+wait_for { @trigger = AuditTrail::Event.find_by name: "trigger" }
+puts @trigger.children.pluck(:name).join(", ")
+# => child_event_1, child_event_2
+@grand_child_event_1 = AuditTrail::Event.find_by name: "grand_child_event_1"
+puts @grand_child_event_1.parent.name
+# => child_event_1
 ```
-If you pass a block to `AuditTrail.record` then the event that is created goes through a few statuses.
+
+If you pass a block to `AuditTrail.service.record` then the event that is created goes through a few statuses.
 
 When `record` is called, a new `AuditTrail::Event` record is created, with a status of `in_progress` and with the user supplied.  Any data you pass in to the `record` method is stored with the event (either serialised or as a linked model).
 
-Then the block is evaluated and any new events recorded are automatically attached as children to this parent event.
+Then the block is evaluated and any new events recorded in the context of your in progress event (see Inheritance below).
 
-When the block finishes, the return value from the block is then stored as the `result` of the event, and the event is marked as `completed`.
+When the block finishes the original event is marked as `completed`.
 
 However, if the block raises an exception, the exception class and message are stored in the event and the event is marked as `failed`.
 
 ### Inheritance
 
-When you stack events each event inherits its context from its parent event.  In particular, this means that the user is automatically carried through to child events.
+When you stack events by working inside a block, the child events inherit their user from the parent event, unless it is explicitly overridden.
 
-This means you can create a top-level event in your controller, setting the user to your `current_user`.  Then call a method in one of your models which itself records an event.  This model-triggered event is created in the context of the controller-triggered event, so automatically inherits your `current_user`, even though your model has no idea who is logged in.
+This means you can create a top-level event in your controller, setting the user to the `current_user` from your session.  Then call a method in one of your models which itself records an event.  This model-triggered event is created in the context of the controller-triggered event, so automatically inherits your `current_user`, even though your model has no idea about what is going on at the controller level.
 
 ```ruby
 class PostsController < ApplicationController
   def create
-    AuditTrail.record "post_created", user: current_user do
+    AuditTrail.service.record "post_created", user: current_user do
       @post = Post.create! title: post_params[:title]
     end
   end
@@ -120,74 +146,74 @@ end
 
 class Post < ApplicationRecord
   after_create :send_notification do
-    AuditTrail.record "notification_sent", template: "new_post_notification" do
-      SubscriberMailer.with(post: self).new_post_notification.deliver_later
+    AuditTrail.service.record "notification_sent", template: "new_post_notification" do |event|
+      SubscriberMailer.with(post: self, sender: event.user).new_post_notification.deliver_later
     end
   end
 end
-
 # Both the "post_created" and "notification_sent" events will have their `user` set to `current_user`
 ```
 
-### Context
-
-If you need to access the current activity, you can by using:
+You can also access the current context directly, although you do need to use `await` to ensure any asynchronous is handled correctly.  There's also a `current_user` method which returns the user from the current event.
 
 ```ruby
-AuditTrail.context_stack.current
+await { AuditTrail.service.current_context }
+await { AuditTrail.service.current_user }
 ```
 
-The context is handled as a stack, so as events are completed, the stack is popped back to the previous level.
-
-Additionally, the context stack is stored in a thread local variable - so if your Rails app uses multiple threads, each one's context is independent.  If you use a fiber-based server, like Falcon, then it should work independently as well as ruby treats thread local variables as fiber local (but I've not tested this).
-
-If you're using ActiveJob, then your jobs will run in a separate process (or maybe in a separate thread).  Either way, the context will be lost by the time that the job is started.  However, as events are ActiveRecord models, you can pass the current context as parameter to your job, then pass it in to your `AuditTrail.record` call to attach any further events to your existing stack.
+Finally, if you're using ActiveJob, you can pass the current context as a parameter to your job, then use `set_context` to ensure that any further events inherit this context.
 
 ```ruby
-class PostsController < ApplicationController
-  def create
-    AuditTrail.record "post_created", user: current_user do
-      @post = Post.create! title: post_params[:title]
-    end
-  end
-end
+class ExportVideoJob < ApplicationJob
+  queue_as :low_priority
 
-class Post < ApplicationRecord
-  after_create :send_notification do
-    AuditTrail.record "subscriber_notification_scheduled" do
-      SendNewPostNotificationToSubscribersJob.perform_later self, context: AuditTrail.context_stack.current
-    end
-  end
-end
-
-class SendNewPostNotificationToSubscribersJob < ApplicationJob
-  def perform post, context: nil
-    Subscriber.find_each do |subscriber|
-      AuditTrail.record "notification_sent", template: "new_post_notification", context: context do
-        SubscriberMailer.with(post: self, recipient: subscriber).new_post_notification.deliver_later
+  def perform event, video
+    AuditTrail.service.in_context(event) do
+      AuditTrail.service.record "video.exporting" do
+        video.export
       end
     end
   end
 end
 ```
 
-### Subscribing to events
+The "video.exporting" event will be created in the context of the event passed in to the ExportVideoJob (including its user).
 
-If you want to know when events happen, you can observe to the audit trail.
+### Controlling the event status
 
-Observation uses [plumbing](https://github.com/standard-procedure/plumbing) to publish a [pipe](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/pipe.rb) that can have observers attached.
-
-The notifications that you observe will have a `type` property that is the event's name, ending with ":started", ":completed" or ":failed".  The `data` property will be the `AuditTrail::Event`. itself.  This means you can use a [filter](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/filter.rb) to observe only the events you are interested in, then use the event object itself to decide how you are going to react.
+Whilst calling `#record` will generate an event for you, with the option of passing in a block to handle "child" events, if you want more control over the life-cycle of the event, you can call `#start` and `#complete` (or `#fail`) yourself.
 
 ```ruby
-# Filter out all events except "document" events that have completed successfully
-@document_filter = Plumbing::Filter.new source: AuditTrail.events do |notification|
-  notification.type.start_with? "document" && notification.type.end_with? ".completed"
+begin
+  @my_event = await { AuditTrail.service.start("my_event") }
+  @result = do_some_complicated_work
+  AuditTrail.service.complete @my_event, result: @result
+rescue => ex
+  AuditTrail.service.fail @my_event, ex
 end
-@document_filter.add_observer do |notification|
-  @document_filter.safely do
-    do_something_with notification.data
-  end
+```
+
+### Observing events
+
+If you want to know when events happen, you can observe the audit trail.
+
+Observation uses [plumbing](https://github.com/standard-procedure/plumbing) to publish a [pipe](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/pipe.rb) that can have observers attached.  Be sure to check the [documentation](https://github.com/standard-procedure/plumbing/blob/main/docs/actors.md) about staying safe if you run Plumbing in threaded mode.
+
+The notifications that you observe will have two parameters - the event's name, ending with ":started", ":completed" or ":failed".  And a `data` Hash that will have an :event containing `AuditTrail::Event`. itself.  This means you can use a [filter](https://github.com/standard-procedure/plumbing/blob/main/lib/plumbing/filter.rb) to observe only the events you are interested in, then use the event object itself to decide how you are going to react.
+
+```ruby
+# observe "document" events that have completed successfully
+Plumbing::Filter.new source: AuditTrail.events do |event_name, data|
+  event_name.start_with? "document" && event_name.end_with? ":completed"
+end.add_observer do |event_name, data|
+  do_something_with data[:event]
+end
+
+# log every failed event
+Plumbing::Filter.new source: AuditTrail.events do |event_name, data|
+  event_name.end_with? ":failed"
+end.add_observer do |event_name, data|
+  Rails.logger.error "Error - #{data[:event].exception_class}: #{data[:event].exception_message}"
 end
 ```
 

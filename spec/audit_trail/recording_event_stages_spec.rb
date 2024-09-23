@@ -20,8 +20,8 @@ RSpec.describe "Recording audit trail events in stages" do
           @user = User.create! name: "Alice"
           @post = Post.create! user: @user, title: "Hello world"
 
-          AuditTrail.service.record "container_event" do |context|
-            AuditTrail.service.start "some_event", context: context, user: @user, description: "A new post", post: @post
+          AuditTrail.service.record "container_event" do
+            AuditTrail.service.start "some_event", user: @user, description: "A new post", post: @post
           end
 
           wait_for { @container_event = AuditTrail::Event.find_by name: "container_event" }
