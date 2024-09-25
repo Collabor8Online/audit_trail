@@ -6,6 +6,11 @@ At [Collabor8Online](https://www.collabor8online.co.uk) a vital part of the func
 
 This gem allows you to add a record of events that have happened within your application in an unobtrusive manner.  Events inherit their context from earlier events so you can prepare things in your controller and it carries through your models as you record subsequent events.
 
+## To Do
+
+- [ ] Results are not set by the block (used to work but no longer)
+- [ ] Move .events into the service?
+
 ## Usage
 
 Install the gem into your Rails application.  Then `include AuditTrail::User` into your `User` model and `include AuditTrail::Model` into any of your other models that you may need to report on.
